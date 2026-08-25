@@ -1,7 +1,7 @@
 # Generalized Naive Bayes Classifier
 
 [![codecov](https://codecov.io/github/abrahampapp/generalized-naive-bayes/graph/badge.svg?token=Y0C6OZ0OYF)](https://codecov.io/github/abrahampapp/generalized-naive-bayes)
-[![Documentation Status](https://readthedocs.org/projects/your-project-name/badge/?version=latest)](https://your-project-name.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/generalized-naive-bayes/badge/?version=latest)](https://generalized-naive-bayes.readthedocs.io/en/latest/?badge=latest)
 [![PyPI Downloads](https://img.shields.io/pypi/dm/generalized-naive-bayes.svg)](https://pypi.org/project/generalized-naive-bayes/)
 ![PyPI - Version](https://img.shields.io/pypi/v/generalized-naive-bayes)
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/AbrahamPapp/generalized-naive-bayes/.github/workflows/ci.yml?branch=main)
@@ -9,7 +9,7 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-A flexible and modular implementation of a generalized Naive Bayes classifier that extends the classic Naive Bayes model by modeling feature pairs selected based on information theory. The classifier models the joint mutual information between continuous input feature pairs and discrete target variables.
+A mathematically rigorous, modular implementation of a Generalized Naive Bayes (GNB) classifier. This package extends the classic Naive Bayes framework by relaxing the strict independence assumption, actively modeling the dependence structure between features using information theory, graph spanning trees, and copulas.
 
 📄 **[Read the full paper on arXiv](https://arxiv.org/abs/1234.56789)**
 
@@ -22,41 +22,39 @@ A flexible and modular implementation of a generalized Naive Bayes classifier th
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Usage Guide](#usage-guide)
-  - [Data Preparation](#1-data-preparation)
-  - [Gaussian Mode](#2-gaussian-mode)
-  - [General Mode (KDE)](#3-general-mode-kde)
-  - [Model Diagnostics](#4-model-diagnostics)
-- [Reporting Issues](#reporting-issues)
+  - [Data Preparation](#0-data-preparation)
+  - [Gaussian Mode](#1-gaussian-mode)
+  - [KDE Mode](#2-kde-mode)
+  - [Copula Mode](#3-copula-mode)
+  - [Model Diagnostics](#5-model-diagnostics)
 - [Citation](#citation)
-- [Contact & Support](#contact--support)
 
 ---
 
 ## Overview
 
-The **Generalized Naive Bayes Classifier** extends traditional Naive Bayes by:
+Traditional Naive Bayes assumes all features are conditionally independent given the class—a mathematically convenient but often unrealistic assumption.
 
-- Modeling dependencies between feature pairs using mutual information
-- Supporting both Gaussian and non-parametric (KDE) distributions
-- Providing interpretable diagnostics and visualizations
-- Offering flexible kernel density estimation for complex distributions
-
-This approach captures richer relationships in the data while maintaining computational efficiency and interpretability.
+The **Generalized Naive Bayes Classifier** constructs a dependence graph where edges represent highly correlated feature pairs (Clusters) and nodes represent individual features (Separators). By calculating true Bayesian joint probabilities across this structure, the model captures complex real-world relationships while natively handling isolated features and class imbalances.
 
 ## Key Features
 
-✨ **Dual Operating Modes**
-- **Gaussian Mode**: Assumes Gaussian distributions for features and feature pairs
-- **General Mode**: Uses Kernel Density Estimation (KDE) with RBF kernel for non-parametric modeling
+✨ **Triple Operating Architecture**
+- **Gaussian Mode (`GaussianGeneralizedNB`)**: Assumes Gaussian distributions for univariate features and bivariate feature pairs.
+- **General Mode (`KDEGeneralizedNB`)**: Fully non-parametric. Uses Kernel Density Estimation (KDE) to map complex, multi-modal distributions.
+- **Copula Mode (`CopulaGeneralizedNB`)**: The best of both worlds. Fuses non-parametric KDE marginals with a bivariate Gaussian Copula dependence structure.
 
-🎯 **Information-Theoretic Feature Selection**
-- Automatically selects informative feature pairs based on mutual information
-- Balances model complexity with predictive performance
+🎯 **Strict Graph Theory Mathematics**
+- Adheres rigidly to the theoretical GNB framework: $\log p(y, \mathbf{x}) = \sum \log p(y, x_i, x_j) - \sum (v_s - 1) \log p(y, x_s)$.
+- Natively evaluates true joint distributions, elegantly handling the Bayesian class prior through graph arithmetic without duplicate counting.
+
+✂️ **Model Reduction & Truncation**
+- Prevent overfitting by pruning the dependence graph to the top $k$ informative feature pairs.
+- Isolated nodes mathematically fall back to independent marginals automatically, preserving their predictive power.
 
 📊 **Comprehensive Diagnostics**
-- Built-in visualization tools for 1D and 2D distributions
-- Misclassification analysis and error visualization
-- Distribution fitting quality assessment
+- Built-in visualization tools for 1D and 2D distributions.
+- Misclassification analysis and spanning tree/arborescence visualization.
 
 🔧 **Scikit-learn Compatible**
 - Follows scikit-learn API conventions
@@ -86,16 +84,18 @@ pip install -e .
 - Scikit-learn ≥ 1.7.1
 - Matplotlib ≥ 3.10.5
 - SciPy ≥ 1.16.1
+- NetworkX ≥ 3.6.1
+- Seaborn ≥ 0.13.2
 
 ---
 
 ## Quick Start
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AbrahamPapp/generalized-naive-bayes/blob/main/notebooks/iris%20demo.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AbrahamPapp/generalized-naive-bayes/blob/main/notebooks/iris_demo.ipynb)
 ```python
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import MinMaxScaler
 
-from generalized_naive_bayes import GeneralizedNaiveBayesClassifier
+from generalized_naive_bayes import GeneralizedNaiveBayes
 
 # Load data
 iris = load_iris()
@@ -106,7 +106,7 @@ scaler = MinMaxScaler()
 X_scaled = scaler.fit_transform(X)
 
 # Train classifier
-classifier = GeneralizedNaiveBayesClassifier()
+classifier = GeneralizedNaiveBayes()
 classifier.fit(X_scaled, y, input_features_type="gaussian")
 
 # Make predictions
@@ -119,9 +119,9 @@ print(f"Accuracy: {accuracy:.2%}")  # ~97.3%
 
 ## Usage Guide
 
-This comprehensive guide demonstrates both operating modes using the classic Iris dataset.
+This comprehensive guide demonstrates the operating modes using the classic Iris dataset.
 
-### 1. Data Preparation
+### 0. Data Preparation
 
 #### Load and Explore the Dataset
 
@@ -179,24 +179,24 @@ scaler = MinMaxScaler()
 X_scaled = scaler.fit_transform(X)
 ```
 
-**Note**: Feature scaling is strongly recommended, especially for the General (KDE) mode, as it improves numerical stability and kernel performance.
+**Note**: Feature scaling is must have, especially for the KDE mode.
 
 ---
 
-### 2. Gaussian Mode
+### 1. Gaussian Mode
 
-The Gaussian mode assumes that features follow Gaussian distributions, fitting univariate and multivariate Gaussians for each class.
+The underlying `estimator_` is called `GaussianGeneralizedNB`. It evaluates bivariate and univariate normal distributions. It maps perfectly to datasets where features exhibit traditional bell-curve behavior.
 
 #### Initialize and Train
 
 ```python
-from generalized_naive_bayes import GeneralizedNaiveBayesClassifier
+from generalized_naive_bayes import GeneralizedNaiveBayes
 
 # Initialize with Gaussian assumption
-classifier = GeneralizedNaiveBayesClassifier()
+classifier = GeneralizedNaiveBayes(distribution="gaussian")
 
 # Fit the model
-classifier.fit(X_scaled, y, input_features_type="gaussian")
+classifier.fit(X_scaled, y)
 ```
 
 #### Make Predictions
@@ -214,16 +214,22 @@ print(f"Training Accuracy: {accuracy:.2%}")  # ~97.33%
 
 #### Visualize Model Diagnostics
 
+Peak into the model and get to know how the model predicted the output
+
 ```python
-from generalized_naive_bayes.utils.plot_functions import (
+from generalized_naive_bayes import GaussianGeneralizedNB
+from generalized_naive_bayes.plotting import (
     plot_1d_gaussian_diagnostics,
     plot_2d_gaussian_diagnostics,
 )
 
+assert isinstance(classifier.estimator_, GaussianGeneralizedNB)
+assert classifier.estimator_.params_ is not None
+
 # 1D Gaussian diagnostics
 plot_1d_gaussian_diagnostics(
-    uni_means=classifier.uni_means,
-    uni_vars=classifier.uni_var,
+    uni_means=classifier.estimator_.params_.uni_means,
+    uni_vars=classifier.estimator_.params_.uni_vars,
     X=X_scaled,
     y=y,
     classes=classifier.classes_,
@@ -232,12 +238,12 @@ plot_1d_gaussian_diagnostics(
 
 # 2D Gaussian diagnostics
 plot_2d_gaussian_diagnostics(
-    multi_means=classifier.multi_means,
-    multi_cov=classifier.multi_covs,
+    multi_means=classifier.estimator_.params_.multi_means,
+    multi_cov=classifier.estimator_.params_.multi_covs,
     X=X_scaled,
     y=y,
     classes=classifier.classes_,
-    nodes=classifier.feature_pairs_,
+    nodes=classifier.estimator_.feature_pairs_,
     X_test=X_scaled[y_pred != y, :],  # Highlight misclassified samples
 )
 ```
@@ -256,36 +262,71 @@ plot_2d_gaussian_diagnostics(
 
 *Bivariate Gaussian fits for selected feature pairs. The model captures joint distributions that provide better class separation than individual features alone.*
 
+
+### Model reduction
+
+#### We can limit the number of clusters used by the model in the `.predict()` call if we are using a simple greedy feature selection algorithm (by default using a separate algorithm called DMST)
+
+
+The Generalized Naive Bayes formula relies on graph theory (Clusters and Separators). If you want to prevent overfitting, you can limit the model to only the $k$ most informative edges using `num_feature_pairs_to_predict`.
+
+
+```python
+from generalized_naive_bayes import FeatureSelection
+
+classifier = GeneralizedNaiveBayes(
+    distribution="gaussian", feature_pair_selection=FeatureSelection.GREEDY
+)
+
+classifier.fit(X=X_scaled, y=y)
+y_pred_general = classifier.predict(X_scaled, num_feature_pairs_to_predict=1)
+
+# Accuracy - Small change compared to previous ~97.33%
+accuracy = accuracy_score(y_true=y, y_pred=y_pred_general)
+print(f"Training Accuracy: {accuracy:.2%}")
+```
+
 ---
 
-### 3. General Mode (KDE)
+### 2. KDE mode
 
-The General mode uses Kernel Density Estimation (KDE) with RBF kernels, making no distributional assumptions about the features. Features are selected based on information theoretic calculations.
+##### Here we can use distribution = 'kde' to approaximate distribution with a kernel
+
+The `KDEGeneralizedNB` uses Kernel Density Estimation. It thrives on multi-modal distributions where Gaussian assumptions fail.
 
 #### Initialize and Train
 
 ```python
-classifier = GeneralizedNaiveBayesClassifier()
+classifier = GeneralizedNaiveBayes(distribution="kde")
 
-classifier.fit(
-    X=X_scaled, y=y, input_features_type="general", feature_pair_selection="dmst"
-)
+classifier.fit(X=X_scaled, y=y)
 y_pred_general = classifier.predict(X_scaled)
 
 # Accuracy
 accuracy = accuracy_score(y_true=y, y_pred=y_pred_general)
-print(f"Training Accuracy: {accuracy:.2%}")  # ~96.67%
+print(f"Training Accuracy: {accuracy:.2%}")  # ~98.00%
 ```
 
 
-#### Look inside the model by using helper functions
+#### Look inside the model by using helper functions. In this case we can visualize the dmst tree as well
 
 ```python
-from generalized_naive_bayes.utils.plot_functions import visualize_arborescence
+from generalized_naive_bayes import KDEGeneralizedNB
+from generalized_naive_bayes.plotting import (
+    get_feature_pairs_dmst_to_plot,
+    visualize_arborescence,
+)
+
+assert isinstance(classifier.estimator_, KDEGeneralizedNB)
+
+graph, dmst_graph = get_feature_pairs_dmst_to_plot(
+    mutual_info_vector=classifier.estimator_.mi_vector_,
+    total_correlation_matrix=classifier.estimator_.tc_matrix_,
+)
 
 visualize_arborescence(
-    graph=classifier.feature_graph_,
-    dmst_graph=classifier.dmst_graph_,
+    graph=graph,
+    dmst_graph=dmst_graph,
     figsize=(14, 8),
     column_names=iris.feature_names,
     random_seed=17,
@@ -299,22 +340,22 @@ visualize_arborescence(
 *Based on directed graph of all features, select the pairs with maximum information*
 
 
-#### Multiple hyperparameters to choose from
+### Using simple greedy approach
 
 ```python
-classifier = GeneralizedNaiveBayesClassifier()
-
-classifier.fit(
-    X=X_scaled, y=y, input_features_type="general", feature_pair_selection="greedy"
+# The 2 feature selection algorithm should produce almost identical
+# but the order in which feature pairs are selected might be different
+classifier = GeneralizedNaiveBayes(
+    distribution="kde", feature_pair_selection=FeatureSelection.GREEDY
 )
+
+classifier.fit(X=X_scaled, y=y)
 y_pred_general = classifier.predict(X_scaled)
 
 # Accuracy
 accuracy = accuracy_score(y_true=y, y_pred=y_pred_general)
 print(f"Training Accuracy: {accuracy:.2%}")  # ~98.00%
 ```
-
-**Performance Note**: The General mode achieves ~98.00% accuracy (147/150 correct) compared to ~97.33% (146/150) in Gaussian mode, demonstrating the benefit of non-parametric modeling for this dataset, but performance varies across datasets.
 
 #### Visualize Model Diagnostics
 
@@ -342,7 +383,7 @@ plot_2d_kde_diagnostics(
 )
 ```
 
-#### General Mode Results
+#### KDE Mode Results
 
 **1D KDE Distributions**
 
@@ -356,9 +397,68 @@ plot_2d_kde_diagnostics(
 
 *Bivariate KDE for selected feature pairs. The flexible kernel approach models complex joint distributions, leading to improved classification in overlapping regions.*
 
+
+### 3. Copula mode
+
+The underlying estimator in this case is called `CopulaGeneralizedNB`. It maps the features into a uniform space using KDE CDFs, then links them using a Gaussian Copula correlation matrix. This isolates the marginal distributions from the dependence structure.
+
+```python
+classifier = GeneralizedNaiveBayes(distribution="gauss-copula")
+
+classifier.fit(X=X_scaled, y=y)
+y_pred_copula = classifier.predict(X_scaled)
+
+# Accuracy
+accuracy = accuracy_score(y_true=y, y_pred=y_pred_copula)
+print(f"Training Accuracy: {accuracy:.2%}")  # ~98.00%
+```
+
+
+```python
+from generalized_naive_bayes import CopulaGeneralizedNB
+from generalized_naive_bayes.plotting import (
+    plot_1d_copula_diagnostics,
+    plot_2d_copula_diagnostics,
+)
+
+assert isinstance(classifier.estimator_, CopulaGeneralizedNB)
+
+# 1. Plot the Marginals (1D)
+plot_1d_copula_diagnostics(
+    class_kdes=classifier.estimator_.class_kdes_,
+    X=X_scaled,
+    y=y,
+    classes=classifier.classes_,
+    X_test=X_scaled[y_pred_copula != y, :],
+)
+
+# 2. Plot the Joint Densities dictated by the Spanning Tree (2D)
+plot_2d_copula_diagnostics(
+    class_kdes=classifier.estimator_.class_kdes_,
+    class_corr_matrices=classifier.estimator_.class_corr_matrices_,
+    X=X_scaled,
+    y=y,
+    classes=classifier.classes_,
+    nodes=classifier.estimator_.feature_pairs_,
+    X_test=X_scaled[y_pred_copula != y, :],
+)
+```
+
+**1D KDE Distributions with gaussian dependency**
+
+![1D KDE Diagnostics](images/iris_1d_copula_readme.png)
+
+*Non-parametric density estimates using RBF kernels for each feature. KDE captures multi-modal and asymmetric distributions that Gaussian assumptions might miss.*
+
+**2D KDE Distributions**
+
+![2D KDE Diagnostics](images/iris_2d_copula_readme.png)
+
+*Bivariate KDE for selected feature pairs. The flexible kernel approach models complex joint distributions and keeps dependency as gaussian.*
+
 ---
 
-### 4. Model Diagnostics
+### 5. Model Diagnostics
 
 #### Understanding the Visualizations
 
@@ -382,18 +482,24 @@ plot_2d_kde_diagnostics(
 #### Parameter tuning: We have included many parameters to play around with.
 
 ```python
-classifier = GeneralizedNaiveBayesClassifier()
+from generalized_naive_bayes import (
+    EntropyApprox,
+    EntropyKDE,
+    FeatureSelection,
+    GeneralizedNaiveBayes,
+)
 
-classifier.fit(
-    X=X_scaled,
-    y=y,
-    input_features_type="general",
-    feature_pair_selection="dmst",
-    entropy_approx_method="kde_based",
-    entropy_kde_method="uniform_grid",
+classifier = GeneralizedNaiveBayes(
+    distribution="kde",
+    feature_pair_selection=FeatureSelection.DMST,
+    entropy_approx_method=EntropyApprox.KDE_BASED,
+    entropy_kde_method=EntropyKDE.UNIFORM_GRID,
     bw_method_double=0.3,
     bw_method_single=1.0,
 )
+
+classifier.fit(X=X_scaled, y=y)
+
 y_pred_general = classifier.predict(X_scaled)
 
 # Accuracy
@@ -432,7 +538,7 @@ If you use this package in your research, please cite our paper:
 
 ## Contact & Support
 
-- **Documentation**: [Read the Docs](https://your-project-name.readthedocs.io/)
+- **Documentation**: [Read the Docs](https://generalized-naive-bayes.readthedocs.io/)
 - **Issue Tracker**: [GitHub Issues](https://github.com/abrahampapp/generalized-naive-bayes/issues)
 - **PyPI Package**: [generalized-naive-bayes](https://pypi.org/project/generalized-naive-bayes/)
 
