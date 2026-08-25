@@ -46,15 +46,14 @@ The **Generalized Naive Bayes Classifier** constructs a dependence graph where e
 
 🎯 **Strict Graph Theory Mathematics**
 - Adheres rigidly to the theoretical GNB framework: $\log p(y, \mathbf{x}) = \sum \log p(y, x_i, x_j) - \sum (v_s - 1) \log p(y, x_s)$.
-- Natively evaluates true joint distributions, elegantly handling the Bayesian class prior through graph arithmetic without duplicate counting.
+- Natively evaluates true joint distributions.
 
 ✂️ **Model Reduction & Truncation**
 - Prevent overfitting by pruning the dependence graph to the top $k$ informative feature pairs.
-- Isolated nodes mathematically fall back to independent marginals automatically, preserving their predictive power.
 
 📊 **Comprehensive Diagnostics**
 - Built-in visualization tools for 1D and 2D distributions.
-- Misclassification analysis and spanning tree/arborescence visualization.
+- Misclassification analysis.
 
 🔧 **Scikit-learn Compatible**
 - Follows scikit-learn API conventions
@@ -307,56 +306,6 @@ accuracy = accuracy_score(y_true=y, y_pred=y_pred_general)
 print(f"Training Accuracy: {accuracy:.2%}")  # ~98.00%
 ```
 
-
-#### Look inside the model by using helper functions. In this case we can visualize the dmst tree as well
-
-```python
-from generalized_naive_bayes import KDEGeneralizedNB
-from generalized_naive_bayes.plotting import (
-    get_feature_pairs_dmst_to_plot,
-    visualize_arborescence,
-)
-
-assert isinstance(classifier.estimator_, KDEGeneralizedNB)
-
-graph, dmst_graph = get_feature_pairs_dmst_to_plot(
-    mutual_info_vector=classifier.estimator_.mi_vector_,
-    total_correlation_matrix=classifier.estimator_.tc_matrix_,
-)
-
-visualize_arborescence(
-    graph=graph,
-    dmst_graph=dmst_graph,
-    figsize=(14, 8),
-    column_names=iris.feature_names,
-    random_seed=17,
-)
-```
-
-**Directed maximum spanning for finding most suitable feature pairs**
-
-![DMST feature selection](images/dmst_tree.png)
-
-*Based on directed graph of all features, select the pairs with maximum information*
-
-
-### Using simple greedy approach
-
-```python
-# The 2 feature selection algorithm should produce almost identical
-# but the order in which feature pairs are selected might be different
-classifier = GeneralizedNaiveBayes(
-    distribution="kde", feature_pair_selection=FeatureSelection.GREEDY
-)
-
-classifier.fit(X=X_scaled, y=y)
-y_pred_general = classifier.predict(X_scaled)
-
-# Accuracy
-accuracy = accuracy_score(y_true=y, y_pred=y_pred_general)
-print(f"Training Accuracy: {accuracy:.2%}")  # ~98.00%
-```
-
 #### Visualize Model Diagnostics
 
 ```python
@@ -526,11 +475,11 @@ Please report bugs and feature requests through [GitHub Issues](https://github.c
 If you use this package in your research, please cite our paper:
 
 ```bibtex
-@article{yourname2024generalized,
-  title={Generalized Naive Bayes: A Feature-Pair Approach with Mutual Information},
-  author={Your Name and Collaborators},
+@article{XXXXXXXXXXXXXXXXXX,
+  title={On Generalized Naive Bayes with Continuous Features},
+  author={Ábrahám Papp, Botond Szilágyi, Edith Alice Kovács},
   journal={arXiv preprint arXiv:1234.56789},
-  year={2024}
+  year={2026}
 }
 ```
 
