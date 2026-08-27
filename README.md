@@ -33,7 +33,7 @@ A mathematically rigorous, modular implementation of a Generalized Naive Bayes (
 
 ## Overview
 
-Traditional Naive Bayes assumes all features are conditionally independent given the class—a mathematically convenient but often unrealistic assumption.
+Traditional Naive Bayes assumes that all features are conditionally independent given the class—a mathematically convenient but often unrealistic assumption.
 
 The **Generalized Naive Bayes Classifier** constructs a dependence graph where edges represent highly correlated feature pairs (Clusters) and nodes represent individual features (Separators). By calculating true Bayesian joint probabilities across this structure, the model captures complex real-world relationships while natively handling isolated features and class imbalances.
 
