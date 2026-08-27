@@ -9,7 +9,7 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-A mathematically rigorous, modular implementation of a Generalized Naive Bayes (GNB) classifier. This package extends the classic Naive Bayes framework by relaxing the strict independence assumption, actively modeling the dependence structure between features using information theory, graph spanning trees, and copulas.
+A mathematically rigorous, modular implementation of a Generalized Naive Bayes (GNB) classifier. This package extends the classic Naive Bayes framework by relaxing the strict conditional independence assumption, allowing the dependence between features.
 
 📄 **[Read the full paper on arXiv](https://arxiv.org/abs/1234.56789)**
 
