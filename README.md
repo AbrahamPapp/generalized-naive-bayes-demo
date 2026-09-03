@@ -9,7 +9,7 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-A mathematically rigorous, modular implementation of a Generalized Naive Bayes (GNB) classifier. This package extends the classic Naive Bayes framework by relaxing the strict conditional independence assumption, allowing the dependence between features.
+A mathematically rigorous, modular implementation of a Generalized Naive Bayes (GNB) classifier. This package extends the classic Naive Bayes framework by relaxing the strict conditional independence assumption, allowing the dependence between features. The method assumes that the explanatory features are continuous.
 
 📄 **[Read the full paper on arXiv](https://arxiv.org/abs/1234.56789)**
 
@@ -35,21 +35,22 @@ A mathematically rigorous, modular implementation of a Generalized Naive Bayes (
 
 Traditional Naive Bayes assumes that all features are conditionally independent given the class—a mathematically convenient but often unrealistic assumption.
 
-The **Generalized Naive Bayes Classifier** constructs a dependence graph where edges represent highly correlated feature pairs (Clusters) and nodes represent individual features (Separators). By calculating true Bayesian joint probabilities across this structure, the model captures complex real-world relationships while natively handling isolated features and class imbalances.
+The **Generalized Naive Bayes Classifier** constructs a probabilistic graphical model on the explanatory variables together with the class variable consisting of clusters of size three and separator of size two.
+The method works under three different assumptions regarding the joint probability distributions of the features: multivariate Gaussian distribution; the dependence struture modeled by Gauss copulas with arbitrary marginals, the most general case without restriction on the dependence structure and marginals.
 
 ## Key Features
 
 ✨ **Triple Operating Architecture**
 - **Gaussian Mode (`GaussianGeneralizedNB`)**: Assumes Gaussian distributions for univariate features and bivariate feature pairs.
-- **General Mode (`KDEGeneralizedNB`)**: Fully non-parametric. Uses Kernel Density Estimation (KDE) to map complex, multi-modal distributions.
-- **Copula Mode (`CopulaGeneralizedNB`)**: The best of both worlds. Fuses non-parametric KDE marginals with a bivariate Gaussian Copula dependence structure.
+- **General Mode (`KDEGeneralizedNB`)**: Fully non-parametric. Uses Kernel Density Estimation (KDE) for modeling distributions.
+- **Copula Mode (`CopulaGeneralizedNB`)**: Fuses KDE marginals with a the dependence structue described by Gaussian copula.
 
 🎯 **Strict Graph Theory Mathematics**
 - Adheres rigidly to the theoretical GNB framework: $\log p(y, \mathbf{x}) = \sum \log p(y, x_i, x_j) - \sum (v_s - 1) \log p(y, x_s)$.
 - Natively evaluates true joint distributions.
 
 ✂️ **Model Reduction & Truncation**
-- Prevent overfitting by pruning the dependence graph to the top $k$ informative feature pairs.
+- Prevent overfitting by pruning the probabilistic graphical model chosing thos which give the maximum information (wight) on the training/ validation data.
 
 📊 **Comprehensive Diagnostics**
 - Built-in visualization tools for 1D and 2D distributions.
